@@ -11,7 +11,7 @@ header{background:linear-gradient(120deg,#14213d,#2457a6);color:white;padding:26
 header h1{margin:0;font-size:clamp(25px,5vw,38px);letter-spacing:2px}header p{margin:7px 0 0;color:#dbe7ff}
 main{max-width:900px;margin:22px auto;padding:0 14px 40px}.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
 button,.tab{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;font-size:15px}
-.tab{background:#e2e8f2;color:var(--navy)}.tab.active{background:var(--navy);color:white}
+button:disabled{opacity:.5;cursor:not-allowed}.tab{background:#e2e8f2;color:var(--navy)}.tab.active{background:var(--navy);color:white}
 .panel{background:white;border-radius:18px;padding:20px;box-shadow:0 8px 28px #14213d12}
 .hidden{display:none}.muted{color:#667085;font-size:14px}.field{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;margin:6px 0 14px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}
@@ -20,9 +20,9 @@ button,.tab{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor
 .primary{background:var(--blue);color:white}.gold{background:var(--gold);color:#332300}.light{background:#e8edf5;color:var(--navy)}
 .actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{flex:1}
 .notice{padding:12px 14px;border-radius:12px;background:#fff7e5;color:#72500b;margin:12px 0;font-size:14px}
-.success{background:#e3f7ed;color:#086341}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.success{background:#e3f7ed;color:#086341}.error{background:#fde8e8;color:#9b1c1c}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
 .stat{background:#f1f5fb;padding:14px;border-radius:12px;text-align:center}.stat b{display:block;font-size:24px;color:var(--blue)}
-.list{padding-left:20px}.winner{padding:10px;background:#e3f7ed;border-radius:10px;margin:7px 0}
+.winner{padding:10px;background:#e3f7ed;border-radius:10px;margin:7px 0}
 @media(max-width:520px){.panel{padding:15px}.cell{min-height:78px;font-size:13px}.stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -33,72 +33,90 @@ button,.tab{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor
 <button class="tab active" id="playerTab" onclick="show('player')">🎮 Người chơi</button>
 <button class="tab" id="hostTab" onclick="show('host')">🎤 Ban tổ chức</button>
 </div>
-
 <section id="player" class="panel">
-<h2>Tạo bảng Bingo của bạn</h2>
-<p class="muted">Nhập tên và 9 từ khóa tự do. Mỗi ô là một từ khóa riêng. Bạn có thể sửa bảng trước khi MC bắt đầu.</p>
-<label for="playerName"><b>Tên người chơi / số báo danh</b></label>
-<input class="field" id="playerName" placeholder="Ví dụ: Nguyễn Văn A">
+<h2>Tham gia HISTORY BINGO</h2>
+<p class="muted">Nhập mã phòng do MC cung cấp, tên và 9 từ khóa khác nhau.</p>
+<label><b>Mã phòng</b></label><input class="field" id="roomCode" placeholder="Ví dụ: A1B2C3" maxlength="6" style="text-transform:uppercase">
+<label><b>Tên người chơi / số báo danh</b></label><input class="field" id="playerName" placeholder="Tên của bạn">
 <div id="inputs" class="grid"></div>
-<div class="actions">
-<button class="primary" onclick="makeBoard()">Tạo bảng 3×3</button>
-<button class="light" onclick="clearBoard()">Xóa bảng</button>
-</div>
+<div class="actions"><button class="primary" id="joinBtn" onclick="joinGame()">Tham gia và tạo bảng</button></div>
 <div id="boardArea" class="hidden">
-<div class="notice" id="status">Bảng đã tạo. Khi MC bắt đầu, hãy dò từ khóa và chạm vào ô tương ứng để đánh dấu.</div>
+<div class="notice" id="playerStatus">Đang chờ MC bắt đầu.</div>
 <div class="grid" id="board"></div>
-<div class="actions">
-<button class="gold" onclick="claimBingo()">BINGO!</button>
-<button class="light" onclick="resetMarks()">Bỏ đánh dấu</button>
-</div>
-<p class="muted" id="progress">0/9 ô đã đánh dấu</p>
-<div id="playerMessage" aria-live="polite"></div>
+<div class="actions"><button class="gold" id="claimBtn" onclick="claimBingo()">BINGO!</button></div>
+<p class="muted" id="progress">0/9 ô đã đánh dấu</p><div id="playerMessage" aria-live="polite"></div>
 </div>
 </section>
-
 <section id="host" class="panel hidden">
 <h2>Màn hình ban tổ chức</h2>
-<p class="muted">Dùng màn hình này để hướng dẫn luật chơi và ghi nhận người báo Bingo trong bản thử nghiệm.</p>
+<p class="muted">Đăng nhập bằng tài khoản MC đã tạo trong Supabase Authentication.</p>
+<div id="loginArea">
+<label><b>Email MC</b></label><input class="field" id="hostEmail" type="email" placeholder="Email đăng nhập">
+<label><b>Mật khẩu MC</b></label><input class="field" id="hostPassword" type="password" placeholder="Mật khẩu">
+<button class="primary" onclick="hostLogin()">Đăng nhập MC</button>
+</div>
+<div id="hostArea" class="hidden">
+<div class="notice success" id="hostLoginStatus">Đã đăng nhập MC.</div>
+<div class="actions"><button class="primary" onclick="createRoom()">Tạo phòng mới</button><button class="light" onclick="refreshHost()">Làm mới</button><button class="light" onclick="hostLogout()">Đăng xuất</button></div>
+<div id="roomInfo" class="notice">Chưa chọn phòng.</div>
 <div class="stats">
-<div class="stat"><b id="playersCount">0</b><span>Người chơi trên thiết bị này</span></div>
+<div class="stat"><b id="playersCount">0</b><span>Người chơi</span></div>
 <div class="stat"><b id="claimsCount">0</b><span>Lượt báo Bingo</span></div>
 <div class="stat"><b id="stateLabel">Chưa bắt đầu</b><span>Trạng thái</span></div>
 </div>
-<div class="notice">Mã QR tham gia: sau khi website được đưa lên mạng bằng một đường link công khai, tạo QR từ đường link đó để mọi người quét. Bản HTML hiện tại là bản mẫu chạy trên một thiết bị.</div>
-<div class="actions">
-<button class="primary" onclick="startGame()">Bắt đầu trò chơi</button>
-<button class="light" onclick="pauseGame()">Tạm dừng</button>
-<button class="gold" onclick="resetGame()">Chơi lượt mới</button>
+<div class="actions"><button class="primary" onclick="hostAction('host_start')">Bắt đầu</button><button class="light" onclick="hostAction('host_pause')">Tạm dừng</button><button class="light" onclick="hostAction('host_end')">Kết thúc</button><button class="gold" onclick="hostAction('host_reset')">Chơi lượt mới</button></div>
+<h3>Danh sách báo Bingo</h3><div id="winners"><p class="muted">Chưa có người báo Bingo.</p></div>
 </div>
-<h3>Danh sách báo Bingo</h3>
-<div id="winners"><p class="muted">Chưa có người báo Bingo.</p></div>
+<div id="hostMessage" aria-live="polite"></div>
 </section>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL='https://ohgepvnsznpuecjigbfh.supabase.co';
+const SUPABASE_KEY='sb_publishable_uBv7SwdGXzXZMvieCLpJMQ_LI9iTuFq';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const FUNCTION_URL=SUPABASE_URL+'/functions/v1/player-action';
 const inputs=document.getElementById('inputs');
 for(let i=0;i<9;i++){const input=document.createElement('input');input.className='field';input.style.margin='0';input.placeholder='Từ khóa '+(i+1);input.maxLength=32;input.id='word'+i;inputs.appendChild(input)}
-let words=[],marks=new Set(),started=false,winners=[],players=new Set();
-function show(which){document.getElementById('player').classList.toggle('hidden',which!=='player');document.getElementById('host').classList.toggle('hidden',which!=='host');document.getElementById('playerTab').classList.toggle('active',which==='player');document.getElementById('hostTab').classList.toggle('active',which==='host');}
-function makeBoard(){
- const vals=Array.from({length:9},(_,i)=>document.getElementById('word'+i).value.trim());
- if(vals.some(x=>!x)){alert('Bạn hãy điền đủ 9 từ khóa nhé!');return}
- if(new Set(vals.map(x=>x.toLocaleLowerCase('vi'))).size!==9){alert('Mỗi ô cần một từ khóa khác nhau.');return}
- words=vals;marks.clear();const name=document.getElementById('playerName').value.trim()||'Người chơi ẩn danh';players.add(name);
- document.getElementById('boardArea').classList.remove('hidden');document.getElementById('status').textContent=started?'Trò chơi đang diễn ra. Chạm vào từ khóa được MC đọc.':'Bảng đã tạo. Chờ MC bắt đầu rồi đánh dấu nhé.';
- renderBoard();updateProgress();
+let player=null,playerToken=null,marks=new Set(),hostGame=null,hostSession=null,hostPoll=null;
+function show(which){document.getElementById('player').classList.toggle('hidden',which!=='player');document.getElementById('host').classList.toggle('hidden',which!=='host');document.getElementById('playerTab').classList.toggle('active',which==='player');document.getElementById('hostTab').classList.toggle('active',which==='host')}
+function message(id,text,type='notice'){const el=document.getElementById(id);el.className='notice '+(type==='success'?'success':type==='error'?'error':'');el.textContent=text}
+async function call(action,payload={},token=SUPABASE_KEY){
+ const res=await fetch(FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+token},body:JSON.stringify({action,...payload})});
+ const data=await res.json();if(!res.ok||data.success===false)throw new Error(data.error||'Không thể thực hiện thao tác.');return data;
 }
-function renderBoard(){const b=document.getElementById('board');b.innerHTML='';words.forEach((w,i)=>{const d=document.createElement('button');d.className='cell'+(marks.has(i)?' marked':'');d.textContent=w;d.disabled=!started;d.onclick=()=>{if(!started)return;marks.has(i)?marks.delete(i):marks.add(i);renderBoard();updateProgress()};b.appendChild(d)})}
+async function joinGame(){
+ const name=document.getElementById('playerName').value.trim(),room_code=document.getElementById('roomCode').value.trim().toUpperCase();
+ const words=Array.from({length:9},(_,i)=>document.getElementById('word'+i).value.trim());
+ if(!room_code||!name||words.some(x=>!x)){message('playerMessage','Hãy nhập mã phòng, tên và đủ 9 từ khóa.','error');return}
+ if(new Set(words.map(x=>x.toLocaleLowerCase('vi'))).size!==9){message('playerMessage','9 từ khóa phải khác nhau.','error');return}
+ const btn=document.getElementById('joinBtn');btn.disabled=true;
+ try{const data=await call('join',{room_code,display_name:name,words});player=data.player;playerToken=data.player_token;marks.clear();localStorage.setItem('historyBingoPlayer',JSON.stringify({player,playerToken,room_code}));document.getElementById('boardArea').classList.remove('hidden');document.getElementById('playerStatus').textContent='Đã vào phòng '+room_code+'. Chờ MC bắt đầu.';renderBoard();updateProgress();message('playerMessage','Tham gia phòng thành công!','success')}
+ catch(e){message('playerMessage',e.message,'error')}finally{btn.disabled=false}
+}
+function renderBoard(){const b=document.getElementById('board');b.innerHTML='';(player?.words||[]).forEach((w,i)=>{const d=document.createElement('button');d.className='cell'+(marks.has(i)?' marked':'');d.textContent=w;d.onclick=()=>markCell(i);b.appendChild(d)})}
+async function markCell(i){
+ if(!player||!playerToken)return;
+ try{const data=await call('mark',{player_id:player.id,player_token:playerToken,index:i});marks=new Set(data.marks.map((v,j)=>v?j:-1).filter(j=>j>=0));renderBoard();updateProgress()}
+ catch(e){message('playerMessage',e.message,'error')}
+}
+function updateProgress(){document.getElementById('progress').textContent=marks.size+'/9 ô đã đánh dấu'+(hasLine()?' · ĐÃ CÓ ĐƯỜNG BINGO!':'')}
 function hasLine(){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];return lines.some(line=>line.every(i=>marks.has(i)))}
-function updateProgress(){document.getElementById('progress').textContent=marks.size+'/9 ô đã đánh dấu'+(hasLine()?' · ĐÃ CÓ ĐƯỜNG BINGO!':'');}
-function claimBingo(){if(!words.length){alert('Hãy tạo bảng trước.');return}if(!started){alert('MC chưa bắt đầu trò chơi.');return}if(!hasLine()){alert('Bạn chưa có đủ 3 ô liên tiếp.');return}const name=document.getElementById('playerName').value.trim()||'Người chơi ẩn danh';if(!winners.some(w=>w.name===name)){winners.push({name,time:new Date().toLocaleTimeString('vi-VN')});}document.getElementById('playerMessage').innerHTML='<div class="notice success"><b>🎉 BINGO!</b> Bạn đã hoàn thành một đường. Hãy báo MC xác nhận.</div>';renderWinners();updateStats();}
-function clearBoard(){words=[];marks.clear();document.getElementById('boardArea').classList.add('hidden');for(let i=0;i<9;i++)document.getElementById('word'+i).value='';}
-function resetMarks(){marks.clear();renderBoard();updateProgress();document.getElementById('playerMessage').textContent='';}
-function startGame(){started=true;document.getElementById('stateLabel').textContent='Đang chơi';document.getElementById('status').textContent='Trò chơi đã bắt đầu! Hãy đánh dấu các từ khóa MC đọc.';renderBoard();updateStats();}
-function pauseGame(){started=false;document.getElementById('stateLabel').textContent='Tạm dừng';renderBoard();updateStats();}
-function resetGame(){started=false;winners=[];marks.clear();document.getElementById('stateLabel').textContent='Chưa bắt đầu';document.getElementById('playerMessage').textContent='';document.getElementById('winners').innerHTML='<p class="muted">Chưa có người báo Bingo.</p>';renderBoard();updateStats();}
-function renderWinners(){document.getElementById('winners').innerHTML=winners.map((w,i)=>`<div class="winner"><b>${i+1}. ${escapeHtml(w.name)}</b> <span class="muted">· ${w.time}</span></div>`).join('')||'<p class="muted">Chưa có người báo Bingo.</p>'}
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function updateStats(){document.getElementById('playersCount').textContent=players.size;document.getElementById('claimsCount').textContent=winners.length;}
+async function claimBingo(){if(!player)return;try{const data=await call('claim',{player_id:player.id,player_token:playerToken});message('playerMessage',data.message||'BINGO hợp lệ! Hãy chờ MC xác nhận.','success')}catch(e){message('playerMessage',e.message,'error')}}
+async function hostLogin(){
+ try{const {data,error}=await db.auth.signInWithPassword({email:document.getElementById('hostEmail').value.trim(),password:document.getElementById('hostPassword').value});if(error)throw error;hostSession=data.session;document.getElementById('loginArea').classList.add('hidden');document.getElementById('hostArea').classList.remove('hidden');message('hostLoginStatus','Đăng nhập MC thành công.','success');await refreshHost();hostPoll=setInterval(refreshHost,3000)}
+ catch(e){message('hostMessage','Đăng nhập thất bại: '+e.message,'error')}
+}
+async function hostLogout(){if(hostPoll)clearInterval(hostPoll);await db.auth.signOut();hostSession=null;hostGame=null;document.getElementById('hostArea').classList.add('hidden');document.getElementById('loginArea').classList.remove('hidden')}
+async function createRoom(){try{const d=await call('create_room',{},hostSession.access_token);hostGame=d.game;showRoom();await refreshHost()}catch(e){message('hostMessage',e.message,'error')}}
+function showRoom(){document.getElementById('roomInfo').textContent=hostGame?'Mã phòng: '+hostGame.room_code+' · Trạng thái: '+hostGame.status:'Chưa chọn phòng.'}
+async function refreshHost(){
+ if(!hostSession)return;
+ try{const d=await call('host_list',{},hostSession.access_token);if(!hostGame&&d.games?.length)hostGame=d.games[0];if(hostGame){const latest=d.games.find(g=>g.id===hostGame.id);if(latest)hostGame=latest;showRoom();document.getElementById('stateLabel').textContent=hostGame.status;const w=await call('host_winners',{game_id:hostGame.id},hostSession.access_token);document.getElementById('claimsCount').textContent=w.winners.length;document.getElementById('winners').innerHTML=w.winners.map((x,i)=>'<div class="winner"><b>'+(i+1)+'. '+escapeHtml(x.bingo_players?.display_name||'Người chơi')+'</b><span class="muted"> · '+new Date(x.created_at).toLocaleTimeString('vi-VN')+'</span></div>').join('')||'<p class="muted">Chưa có người báo Bingo.</p>'}}
+ catch(e){message('hostMessage',e.message,'error')}
+}
+async function hostAction(action){if(!hostGame){message('hostMessage','Hãy tạo phòng trước.','error');return}try{await call(action,{game_id:hostGame.id},hostSession.access_token);await refreshHost();message('hostMessage','Đã cập nhật trạng thái phòng.','success')}catch(e){message('hostMessage',e.message,'error')}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 </script>
 </body>
 </html>
