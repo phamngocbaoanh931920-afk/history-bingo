@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HISTORY BINGO</title>
+<style>
+:root{--navy:#14213d;--blue:#2457a6;--gold:#f2b544;--paper:#f5f7fb;--ink:#172033;--green:#16865b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--paper);color:var(--ink)}
+header{background:linear-gradient(120deg,#14213d,#2457a6);color:white;padding:26px 18px;text-align:center}
+header h1{margin:0;font-size:clamp(25px,5vw,38px);letter-spacing:2px}header p{margin:7px 0 0;color:#dbe7ff}
+main{max-width:900px;margin:22px auto;padding:0 14px 40px}.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+button,.tab{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;font-size:15px}
+.tab{background:#e2e8f2;color:var(--navy)}.tab.active{background:var(--navy);color:white}
+.panel{background:white;border-radius:18px;padding:20px;box-shadow:0 8px 28px #14213d12}
+.hidden{display:none}.muted{color:#667085;font-size:14px}.field{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;margin:6px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}
+.cell{min-height:94px;border:2px solid #d8dfeb;background:#f8faff;border-radius:13px;padding:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:650;overflow-wrap:anywhere;cursor:pointer}
+.cell.marked{background:#d9f5e8;border-color:var(--green);color:#09633f}
+.primary{background:var(--blue);color:white}.gold{background:var(--gold);color:#332300}.light{background:#e8edf5;color:var(--navy)}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.actions button{flex:1}
+.notice{padding:12px 14px;border-radius:12px;background:#fff7e5;color:#72500b;margin:12px 0;font-size:14px}
+.success{background:#e3f7ed;color:#086341}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.stat{background:#f1f5fb;padding:14px;border-radius:12px;text-align:center}.stat b{display:block;font-size:24px;color:var(--blue)}
+.list{padding-left:20px}.winner{padding:10px;background:#e3f7ed;border-radius:10px;margin:7px 0}
+@media(max-width:520px){.panel{padding:15px}.cell{min-height:78px;font-size:13px}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><h1>HISTORY BINGO</h1><p>9 từ khóa của bạn · 1 đường Bingo chiến thắng</p></header>
+<main>
+<div class="tabs">
+<button class="tab active" id="playerTab" onclick="show('player')">🎮 Người chơi</button>
+<button class="tab" id="hostTab" onclick="show('host')">🎤 Ban tổ chức</button>
+</div>
+
+<section id="player" class="panel">
+<h2>Tạo bảng Bingo của bạn</h2>
+<p class="muted">Nhập tên và 9 từ khóa tự do. Mỗi ô là một từ khóa riêng. Bạn có thể sửa bảng trước khi MC bắt đầu.</p>
+<label for="playerName"><b>Tên người chơi / số báo danh</b></label>
+<input class="field" id="playerName" placeholder="Ví dụ: Nguyễn Văn A">
+<div id="inputs" class="grid"></div>
+<div class="actions">
+<button class="primary" onclick="makeBoard()">Tạo bảng 3×3</button>
+<button class="light" onclick="clearBoard()">Xóa bảng</button>
+</div>
+<div id="boardArea" class="hidden">
+<div class="notice" id="status">Bảng đã tạo. Khi MC bắt đầu, hãy dò từ khóa và chạm vào ô tương ứng để đánh dấu.</div>
+<div class="grid" id="board"></div>
+<div class="actions">
+<button class="gold" onclick="claimBingo()">BINGO!</button>
+<button class="light" onclick="resetMarks()">Bỏ đánh dấu</button>
+</div>
+<p class="muted" id="progress">0/9 ô đã đánh dấu</p>
+<div id="playerMessage" aria-live="polite"></div>
+</div>
+</section>
+
+<section id="host" class="panel hidden">
+<h2>Màn hình ban tổ chức</h2>
+<p class="muted">Dùng màn hình này để hướng dẫn luật chơi và ghi nhận người báo Bingo trong bản thử nghiệm.</p>
+<div class="stats">
+<div class="stat"><b id="playersCount">0</b><span>Người chơi trên thiết bị này</span></div>
+<div class="stat"><b id="claimsCount">0</b><span>Lượt báo Bingo</span></div>
+<div class="stat"><b id="stateLabel">Chưa bắt đầu</b><span>Trạng thái</span></div>
+</div>
+<div class="notice">Mã QR tham gia: sau khi website được đưa lên mạng bằng một đường link công khai, tạo QR từ đường link đó để mọi người quét. Bản HTML hiện tại là bản mẫu chạy trên một thiết bị.</div>
+<div class="actions">
+<button class="primary" onclick="startGame()">Bắt đầu trò chơi</button>
+<button class="light" onclick="pauseGame()">Tạm dừng</button>
+<button class="gold" onclick="resetGame()">Chơi lượt mới</button>
+</div>
+<h3>Danh sách báo Bingo</h3>
+<div id="winners"><p class="muted">Chưa có người báo Bingo.</p></div>
+</section>
+</main>
+<script>
+const inputs=document.getElementById('inputs');
+for(let i=0;i<9;i++){const input=document.createElement('input');input.className='field';input.style.margin='0';input.placeholder='Từ khóa '+(i+1);input.maxLength=32;input.id='word'+i;inputs.appendChild(input)}
+let words=[],marks=new Set(),started=false,winners=[],players=new Set();
+function show(which){document.getElementById('player').classList.toggle('hidden',which!=='player');document.getElementById('host').classList.toggle('hidden',which!=='host');document.getElementById('playerTab').classList.toggle('active',which==='player');document.getElementById('hostTab').classList.toggle('active',which==='host');}
+function makeBoard(){
+ const vals=Array.from({length:9},(_,i)=>document.getElementById('word'+i).value.trim());
+ if(vals.some(x=>!x)){alert('Bạn hãy điền đủ 9 từ khóa nhé!');return}
+ if(new Set(vals.map(x=>x.toLocaleLowerCase('vi'))).size!==9){alert('Mỗi ô cần một từ khóa khác nhau.');return}
+ words=vals;marks.clear();const name=document.getElementById('playerName').value.trim()||'Người chơi ẩn danh';players.add(name);
+ document.getElementById('boardArea').classList.remove('hidden');document.getElementById('status').textContent=started?'Trò chơi đang diễn ra. Chạm vào từ khóa được MC đọc.':'Bảng đã tạo. Chờ MC bắt đầu rồi đánh dấu nhé.';
+ renderBoard();updateProgress();
+}
+function renderBoard(){const b=document.getElementById('board');b.innerHTML='';words.forEach((w,i)=>{const d=document.createElement('button');d.className='cell'+(marks.has(i)?' marked':'');d.textContent=w;d.disabled=!started;d.onclick=()=>{if(!started)return;marks.has(i)?marks.delete(i):marks.add(i);renderBoard();updateProgress()};b.appendChild(d)})}
+function hasLine(){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];return lines.some(line=>line.every(i=>marks.has(i)))}
+function updateProgress(){document.getElementById('progress').textContent=marks.size+'/9 ô đã đánh dấu'+(hasLine()?' · ĐÃ CÓ ĐƯỜNG BINGO!':'');}
+function claimBingo(){if(!words.length){alert('Hãy tạo bảng trước.');return}if(!started){alert('MC chưa bắt đầu trò chơi.');return}if(!hasLine()){alert('Bạn chưa có đủ 3 ô liên tiếp.');return}const name=document.getElementById('playerName').value.trim()||'Người chơi ẩn danh';if(!winners.some(w=>w.name===name)){winners.push({name,time:new Date().toLocaleTimeString('vi-VN')});}document.getElementById('playerMessage').innerHTML='<div class="notice success"><b>🎉 BINGO!</b> Bạn đã hoàn thành một đường. Hãy báo MC xác nhận.</div>';renderWinners();updateStats();}
+function clearBoard(){words=[];marks.clear();document.getElementById('boardArea').classList.add('hidden');for(let i=0;i<9;i++)document.getElementById('word'+i).value='';}
+function resetMarks(){marks.clear();renderBoard();updateProgress();document.getElementById('playerMessage').textContent='';}
+function startGame(){started=true;document.getElementById('stateLabel').textContent='Đang chơi';document.getElementById('status').textContent='Trò chơi đã bắt đầu! Hãy đánh dấu các từ khóa MC đọc.';renderBoard();updateStats();}
+function pauseGame(){started=false;document.getElementById('stateLabel').textContent='Tạm dừng';renderBoard();updateStats();}
+function resetGame(){started=false;winners=[];marks.clear();document.getElementById('stateLabel').textContent='Chưa bắt đầu';document.getElementById('playerMessage').textContent='';document.getElementById('winners').innerHTML='<p class="muted">Chưa có người báo Bingo.</p>';renderBoard();updateStats();}
+function renderWinners(){document.getElementById('winners').innerHTML=winners.map((w,i)=>`<div class="winner"><b>${i+1}. ${escapeHtml(w.name)}</b> <span class="muted">· ${w.time}</span></div>`).join('')||'<p class="muted">Chưa có người báo Bingo.</p>'}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function updateStats(){document.getElementById('playersCount').textContent=players.size;document.getElementById('claimsCount').textContent=winners.length;}
+</script>
+</body>
+</html>
