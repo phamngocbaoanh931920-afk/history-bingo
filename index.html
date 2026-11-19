@@ -444,6 +444,8 @@ async function refreshHost() {
       showRoom();
 
       document.getElementById('stateLabel').textContent = hostGame.status;
+      document.getElementById('playersCount').textContent =
+        Number(latest?.players_count ?? 0);
 
       const winnersData = await call(
         'host_winners',
