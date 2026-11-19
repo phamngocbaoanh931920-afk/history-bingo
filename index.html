@@ -54,6 +54,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </div>
 
 <section id="player" class="panel">
+<div id="joinForm">
 <h2>Tham gia HISTORY BINGO</h2>
 <p class="muted">Nhập mã phòng do MC cung cấp, tên và 9 từ khóa khác nhau.</p>
 
@@ -68,9 +69,17 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div class="actions">
 <button class="primary" id="joinBtn" onclick="joinGame()">Tham gia và tạo bảng</button>
 </div>
+</div>
+
+<div id="joinMessage" aria-live="polite"></div>
 
 <div id="boardArea" class="hidden">
+<div class="notice success" id="roomHeading">
+<strong>ĐÃ VÀO PHÒNG BINGO CHUNG</strong>
+<div id="roomDetails">Đang kết nối phòng...</div>
+</div>
 <div class="notice" id="playerStatus">Đang chờ MC bắt đầu.</div>
+<h3>Bảng Bingo của bạn</h3>
 <div class="grid" id="board"></div>
 <div class="actions">
 <button class="gold" id="claimBtn" onclick="claimBingo()">BINGO!</button>
@@ -224,12 +233,12 @@ async function joinGame() {
   );
 
   if (!room_code || !name || words.some(x => !x)) {
-    message('playerMessage', 'Hãy nhập mã phòng, tên và đủ 9 từ khóa.', 'error');
+    message('joinMessage', 'Hãy nhập mã phòng, tên và đủ 9 từ khóa.', 'error');
     return;
   }
 
   if (new Set(words.map(x => x.toLocaleLowerCase('vi'))).size !== 9) {
-    message('playerMessage', '9 từ khóa phải khác nhau.', 'error');
+    message('joinMessage', '9 từ khóa phải khác nhau.', 'error');
     return;
   }
 
@@ -253,16 +262,19 @@ async function joinGame() {
       room_code
     }));
 
+    document.getElementById('joinForm').classList.add('hidden');
+    document.getElementById('joinMessage').textContent = '';
     document.getElementById('boardArea').classList.remove('hidden');
+    document.getElementById('roomDetails').textContent = 'Mã phòng: ' + room_code + ' · Người chơi: ' + name;
     document.getElementById('playerStatus').textContent =
       'Đã vào phòng ' + room_code + '. Chờ MC bắt đầu.';
 
     renderBoard();
     updateProgress();
 
-    message('playerMessage', 'Tham gia phòng thành công!', 'success');
+    message('playerMessage', 'Bạn đã vào phòng chung. Hãy chờ MC công bố từ khóa rồi tick vào ô trùng khớp.', 'success');
   } catch (error) {
-    message('playerMessage', error.message, 'error');
+    message('joinMessage', error.message, 'error');
   } finally {
     btn.disabled = false;
   }
@@ -299,7 +311,7 @@ async function markCell(index) {
     renderBoard();
     updateProgress();
   } catch (error) {
-    message('playerMessage', error.message, 'error');
+    message('joinMessage', error.message, 'error');
   }
 }
 
@@ -335,7 +347,7 @@ async function claimBingo() {
       'success'
     );
   } catch (error) {
-    message('playerMessage', error.message, 'error');
+    message('joinMessage', error.message, 'error');
   }
 }
 
