@@ -59,10 +59,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <p class="muted">Nhập mã phòng do MC cung cấp, tên và 9 từ khóa khác nhau.</p>
 
 <label><b>Mã phòng</b></label>
-<input class="field" id="roomCode" placeholder="Ví dụ: A1B2C3" maxlength="6" style="text-transform:uppercase">
+<input class="field" id="roomCode" type="text" autocomplete="off" placeholder="Ví dụ: A1B2C3" maxlength="6" style="text-transform:uppercase">
 
 <label><b>Tên người chơi / số báo danh</b></label>
-<input class="field" id="playerName" placeholder="Tên của bạn">
+<input class="field" id="playerName" type="text" autocomplete="off" placeholder="Tên của bạn">
 
 <div id="inputs" class="grid"></div>
 
@@ -145,13 +145,21 @@ const FUNCTION_URL = SUPABASE_URL + '/functions/v1/player-action';
 
 const inputs = document.getElementById('inputs');
 
+// TẠO 9 Ô NHẬP TỪ KHÓA - ĐÃ TẮT GỢI Ý EMAIL
 for (let i = 0; i < 9; i++) {
   const input = document.createElement('input');
+
+  input.type = 'text';
   input.className = 'field';
   input.style.margin = '0';
   input.placeholder = 'Từ khóa ' + (i + 1);
   input.maxLength = 32;
   input.id = 'word' + i;
+  input.name = 'bingo_keyword_' + (i + 1);
+  input.autocomplete = 'off';
+  input.setAttribute('autocorrect', 'off');
+  input.setAttribute('autocapitalize', 'off');
+
   inputs.appendChild(input);
 }
 
